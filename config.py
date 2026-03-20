@@ -36,8 +36,8 @@ API_TIMEOUT = 15
 
 # ===== إعدادات Gemini AI =====
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
-GEMINI_MODEL = "gemini-2.0-flash"
-GEMINI_VISION_MODEL = "gemini-2.0-flash"
+GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_VISION_MODEL = "gemini-2.5-flash"
 
 # ===== إنشاء المجلدات =====
 os.makedirs(DATA_DIR, exist_ok=True)
