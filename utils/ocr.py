@@ -11,22 +11,27 @@ import config
 
 
 def check_ocr_deps() -> dict:
+    """التحقق من وجود المكتبات المطلوبة"""
     status = {"cv2": False, "pytesseract": False, "PIL": False}
+
     try:
-        import cv2
+        import cv2  # opencv-python-headless
         status["cv2"] = True
     except ImportError:
         pass
+
     try:
         import pytesseract
         status["pytesseract"] = True
     except ImportError:
         pass
+
     try:
         from PIL import Image
         status["PIL"] = True
     except ImportError:
         pass
+
     return status
 
 
@@ -44,7 +49,6 @@ def extract_letters_from_image(image_path_or_bytes, lang="ara"):
         pytesseract.pytesseract.tesseract_cmd = config.TESSERACT_PATH
 
     try:
-        # قراءة من bytes أو مسار
         if isinstance(image_path_or_bytes, bytes):
             nparr = np.frombuffer(image_path_or_bytes, np.uint8)
             image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
@@ -65,7 +69,7 @@ def extract_letters_from_image(image_path_or_bytes, lang="ara"):
         arabic_letters = re.findall(r'[\u0600-\u06FF]', text)
         return ''.join(arabic_letters)
 
-    except Exception as e:
+    except Exception:
         return ""
 
 
