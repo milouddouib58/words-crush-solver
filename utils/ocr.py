@@ -1,5 +1,7 @@
 """
 👁 استخراج الحروف من الصور (OCR)
+- جميع المكتبات اختيارية
+- يعمل بدونها مع إدخال يدوي
 """
 
 import os
@@ -7,7 +9,6 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import config
 
 
 def check_ocr_deps() -> dict:
@@ -15,21 +16,21 @@ def check_ocr_deps() -> dict:
     status = {"cv2": False, "pytesseract": False, "PIL": False}
 
     try:
-        import cv2  # opencv-python-headless
+        import cv2
         status["cv2"] = True
-    except ImportError:
+    except (ImportError, Exception):
         pass
 
     try:
         import pytesseract
         status["pytesseract"] = True
-    except ImportError:
+    except (ImportError, Exception):
         pass
 
     try:
         from PIL import Image
         status["PIL"] = True
-    except ImportError:
+    except (ImportError, Exception):
         pass
 
     return status
@@ -37,23 +38,21 @@ def check_ocr_deps() -> dict:
 
 def extract_letters_from_image(image_path_or_bytes, lang="ara"):
     """استخراج الحروف العربية من صورة"""
-    deps = check_ocr_deps()
-    if not deps["cv2"] or not deps["pytesseract"]:
+    try:
+        import cv2
+        import numpy as np
+        import pytesseract
+    except ImportError:
         return ""
-
-    import cv2
-    import numpy as np
-    import pytesseract
-
-    if os.path.exists(config.TESSERACT_PATH):
-        pytesseract.pytesseract.tesseract_cmd = config.TESSERACT_PATH
 
     try:
         if isinstance(image_path_or_bytes, bytes):
             nparr = np.frombuffer(image_path_or_bytes, np.uint8)
             image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        else:
+        elif isinstance(image_path_or_bytes, str):
             image = cv2.imread(image_path_or_bytes)
+        else:
+            return ""
 
         if image is None:
             return ""
@@ -63,8 +62,9 @@ def extract_letters_from_image(image_path_or_bytes, lang="ara"):
             gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
         )
 
-        custom_config = f'--oem 3 --psm 6 -l {lang}'
-        text = pytesseract.image_to_string(processed, config=custom_config)
+        text = pytesseract.image_to_string(
+            processed, config=f'--oem 3 --psm 6 -l {lang}'
+        )
 
         arabic_letters = re.findall(r'[\u0600-\u06FF]', text)
         return ''.join(arabic_letters)
@@ -75,18 +75,10 @@ def extract_letters_from_image(image_path_or_bytes, lang="ara"):
 
 def extract_from_pil_image(pil_image, lang="ara"):
     """استخراج من صورة PIL مباشرة"""
-    deps = check_ocr_deps()
-    if not deps["pytesseract"]:
-        return ""
-
-    import pytesseract
-
-    if os.path.exists(config.TESSERACT_PATH):
-        pytesseract.pytesseract.tesseract_cmd = config.TESSERACT_PATH
-
     try:
+        import pytesseract
         text = pytesseract.image_to_string(pil_image, lang=lang)
         arabic_letters = re.findall(r'[\u0600-\u06FF]', text)
         return ''.join(arabic_letters)
-    except Exception:
+    except (ImportError, Exception):
         return ""
