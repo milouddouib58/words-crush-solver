@@ -34,11 +34,20 @@ def is_ai_available() -> bool:
         return False
     return bool(get_api_key())
 
-def get_model(model_name="gemini-1.5-flash"):
+def get_model(model_name=None):
     """إعداد وإرجاع نموذج Gemini"""
     if not is_ai_available():
         raise RuntimeError("الذكاء الاصطناعي غير متوفر أو المفتاح مفقود.")
     
+    if model_name is None:
+        try:
+            import sys
+            sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            import config
+            model_name = getattr(config, 'GEMINI_MODEL', 'gemini-2.0-flash')
+        except Exception:
+            model_name = 'gemini-2.0-flash'
+
     api_key = get_api_key()
     genai.configure(api_key=api_key)
     return genai.GenerativeModel(model_name)
