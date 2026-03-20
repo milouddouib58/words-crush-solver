@@ -1,6 +1,6 @@
-pytesseract>=0.3.10
-Pillow>=9.0.0
-opencv-python>=4.5.0
-adbutils>=0.15.0
-requests>=2.28.0
-numpy>=1.21.0
+tesseract-ocr
+tesseract-ocr-ara
+libglib2.0-0
+libsm6
+libxrender1
+libxext6
