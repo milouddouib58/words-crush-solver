@@ -354,6 +354,47 @@ with col6:
     """, unsafe_allow_html=True)
 
 st.markdown("---")
+# أضف هذا الكود بعد بطاقات الميزات الموجودة في app.py
+# (بعد col4, col5, col6)
+
+# ═══ بطاقة AI ═══
+st.markdown("---")
+
+from utils.gemini_helper import is_ai_available
+ai_ok = is_ai_available()
+
+if ai_ok:
+    st.markdown("""
+    <div style="
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        border-radius: 15px; padding: 2rem; text-align: center;
+        box-shadow: 0 8px 32px rgba(102,126,234,0.4);
+    ">
+        <h2 style="color:white; margin:0;">🧠 الذكاء الاصطناعي مفعّل!</h2>
+        <p style="color:rgba(255,255,255,0.9); font-size:1.1rem;">
+            يمكنك الآن حل المراحل من الصور مباشرة، واكتشاف الأمثال من الإيموجي
+        </p>
+        <p style="color:rgba(255,255,255,0.7); font-size:0.9rem;">
+            اذهب إلى صفحة "🧠 الحل الذكي AI" من القائمة الجانبية
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+else:
+    st.markdown("""
+    <div style="
+        background: linear-gradient(135deg, #1e2130, #2a2d3e);
+        border: 2px dashed #667eea;
+        border-radius: 15px; padding: 2rem; text-align: center;
+    ">
+        <h2 style="color:#667eea; margin:0;">🧠 فعّل الذكاء الاصطناعي!</h2>
+        <p style="color:#aaa; font-size:1rem;">
+            أضف مفتاح Gemini API المجاني لتفعيل الحل الذكي من الصور والإيموجي
+        </p>
+        <p style="color:#888; font-size:0.85rem;">
+            اذهب إلى صفحة ⚙️ الإعدادات للتفعيل
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # ===== إحصائيات سريعة =====
 st.markdown("## 📈 نظرة سريعة")
