@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+venv/
+.env/
+.venv/
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+temp_screenshot.png
+results/
+dist/
+build/
+*.egg-info/
+*.log
+
+# ⚠️ حماية المفتاح
+.streamlit/secrets.toml
