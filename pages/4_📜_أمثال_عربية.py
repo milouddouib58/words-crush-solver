@@ -11,7 +11,7 @@ from core.proverbs import (
     solve_proverb, get_all_proverbs,
     complete_proverb, PROVERBS_DB
 )
-from utils.gemini_helper import is_ai_available, ai_solve_proverb
+from utils.mistral_helper import is_ai_available, mistral_solve_proverb
 
 
 st.set_page_config(page_title="أمثال عربية", page_icon="📜", layout="wide")
@@ -76,7 +76,7 @@ if search_method == "🧠 حل بالذكاء الاصطناعي (إيموجي)"
     if st.button("🧠 اكتشف المثل", type="primary", use_container_width=True):
         if emojis:
             with st.spinner("🤖 جاري التحليل..."):
-                result = ai_solve_proverb(
+                result = mistral_solve_proverb(
                     emojis=emojis,
                     letters=letters,
                     hint=hint
@@ -143,7 +143,7 @@ elif search_method == "🔍 بحث في القاعدة المحلية":
             if ai_available:
                 if st.button("🧠 جرب الذكاء الاصطناعي"):
                     with st.spinner("🤖 ..."):
-                        result = ai_solve_proverb(hint=keyword)
+                        result = mistral_solve_proverb(emojis="", hint=keyword)
                     proverb = result.get("proverb", "")
                     if proverb:
                         st.markdown(f'<div class="ai-result">📜 {proverb}</div>',
