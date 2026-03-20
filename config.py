@@ -39,6 +39,10 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 GEMINI_MODEL = "gemini-2.5-flash"
 GEMINI_VISION_MODEL = "gemini-2.5-flash"
 
+# ===== إعدادات Mistral AI =====
+MISTRAL_API_KEY = os.environ.get("MISTRAL_API_KEY", "")
+MISTRAL_MODEL = "mistral-large-latest"
+
 # ===== إنشاء المجلدات =====
 os.makedirs(DATA_DIR, exist_ok=True)
 
