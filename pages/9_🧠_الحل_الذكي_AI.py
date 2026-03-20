@@ -130,6 +130,10 @@ if mode == "📷 حل من صورة الشاشة (Gemini يقرأ ➔ Mistral ي
                     lengths = vision_ext.get("word_lengths", [])
                     if lengths:
                         st.info(f"📏 **المربعات المطلوبة:** {lengths}")
+                        
+                    partials = vision_ext.get("partial_words", [])
+                    if partials:
+                        st.info(f"🧩 **تقاطعات الشبكة المكتشفة:** {partials}")
                     
                     # 2. المرحلة المنطقية
                     emojis = vision_ext.get("emojis", "")
@@ -159,7 +163,8 @@ if mode == "📷 حل من صورة الشاشة (Gemini يقرأ ➔ Mistral ي
                                 topic=vision_ext.get("topic", ""),
                                 image_description=vision_ext.get("image_description", ""),
                                 trie_results=trie_words,
-                                word_lengths=lengths
+                                word_lengths=lengths,
+                                partial_words=partials
                             )
                         
                         if "error" in m_result:
@@ -192,6 +197,7 @@ elif mode == "🔤 حل كلمات مبعثرة (Mistral Logic)":
     
     desc = st.text_input("🖼️ هل هناك رسمة؟ صِفها هنا لمساعدة Mistral", key="h_d")
     lengths_str = st.text_input("📏 أطوال الكلمات المطلوبة (اختياري مثل: 4, 5)", key="h_len")
+    partial_str = st.text_input("🧩 كلمات متقاطعة ناقصة (اختياري وضع _ للفراغ: م _ س و م)", key="h_part")
     
     if st.button("🚀 حل باستخدام Mistral", type="primary"):
         arabic = ''.join(c for c in letters if '\u0600' <= c <= '\u06FF')
@@ -200,6 +206,10 @@ elif mode == "🔤 حل كلمات مبعثرة (Mistral Logic)":
             try:
                 parsed_lengths = [int(x.strip()) for x in lengths_str.split(",")]
             except: pass
+            
+        parsed_partials = []
+        if partial_str:
+            parsed_partials = [x.strip() for x in partial_str.split(",") if x.strip()]
         if not arabic:
             st.error("❌ حروف فارغة")
         else:
@@ -208,7 +218,7 @@ elif mode == "🔤 حل كلمات مبعثرة (Mistral Logic)":
             
             with st.spinner("🤖 معالجة المنطق عبر Mistral..."):
                 topic_str = "" if topic == "بدون" else topic
-                res = mistral_solve_logic(arabic, topic=topic_str, image_description=desc, trie_results=trie_words, word_lengths=parsed_lengths)
+                res = mistral_solve_logic(arabic, topic=topic_str, image_description=desc, trie_results=trie_words, word_lengths=parsed_lengths, partial_words=parsed_partials)
             
             if "error" in res:
                 st.error(res["error"])
