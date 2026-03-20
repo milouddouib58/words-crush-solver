@@ -22,7 +22,7 @@ st.set_page_config(page_title="إعدادات", page_icon="⚙️", layout="wide
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
-*:not(.material-symbols-rounded):not(.material-icons):not(.stIcon):not([class*="icon"]) { font-family: 'Tajawal', sans-serif !important; }
+
 .status-ok { color: #43e97b; font-weight: 700; }
 .status-no { color: #f5576c; font-weight: 700; }
 </style>

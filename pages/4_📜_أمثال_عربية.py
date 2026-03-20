@@ -19,7 +19,7 @@ st.set_page_config(page_title="أمثال عربية", page_icon="📜", layout=
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
-*:not(.material-symbols-rounded):not(.material-icons):not(.stIcon):not([class*="icon"]) { font-family: 'Tajawal', sans-serif !important; }
+
 .proverb-card {
     background: linear-gradient(135deg, #1e2130, #2a2d3e);
     border: 1px solid #3a3d4e; border-radius: 12px;

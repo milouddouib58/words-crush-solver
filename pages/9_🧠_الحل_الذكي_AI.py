@@ -28,7 +28,7 @@ st.set_page_config(page_title="الحل الذكي AI (ثنائي التعقيد
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
-*:not(.material-symbols-rounded):not(.material-icons):not(.stIcon):not([class*="icon"]) { font-family: 'Tajawal', sans-serif !important; }
+
 
 .ai-header {
     text-align: center; padding: 2rem;
