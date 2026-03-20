@@ -20,7 +20,7 @@ st.set_page_config(page_title="إحصائيات", page_icon="📊", layout="wide
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
-* { font-family: 'Tajawal', sans-serif !important; }
+*:not(.material-symbols-rounded):not(.material-icons):not(.stIcon):not([class*="icon"]) { font-family: 'Tajawal', sans-serif !important; }
 </style>
 """, unsafe_allow_html=True)
 

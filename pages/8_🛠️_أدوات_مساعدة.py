@@ -24,7 +24,7 @@ st.set_page_config(page_title="أدوات مساعدة", page_icon="🛠️", la
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
-* { font-family: 'Tajawal', sans-serif !important; }
+*:not(.material-symbols-rounded):not(.material-icons):not(.stIcon):not([class*="icon"]) { font-family: 'Tajawal', sans-serif !important; }
 .word-chip {
     display: inline-block;
     background: linear-gradient(135deg, #667eea, #764ba2);
