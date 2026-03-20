@@ -112,20 +112,6 @@ def load_trie(dict_file=None, auto_download=True):
         except Exception:
             pass
 
-    # === 2. تحميل من الإنترنت ===
-    if not loaded and auto_download:
-        urls = [config.DICT_URL] + config.BACKUP_DICT_URLS
-        for url in urls:
-            try:
-                os.makedirs(os.path.dirname(dict_path), exist_ok=True)
-                response = urllib.request.urlopen(url, timeout=30)
-                data = response.read()
-                with open(dict_path, 'wb') as f:
-                    f.write(data)
-                return load_trie(dict_path, auto_download=False)
-            except Exception:
-                continue
-
     # === 3. القاموس المدمج الضخم ===
     if trie.word_count == 0:
         try:
