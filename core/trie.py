@@ -5,16 +5,14 @@
 import os
 import re
 import urllib.request
-
 import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import config
 
 
 class TrieNode:
-    """عقدة في شجرة Trie"""
     __slots__ = ['children', 'is_end', 'word']
-
     def __init__(self):
         self.children = {}
         self.is_end = False
@@ -22,8 +20,6 @@ class TrieNode:
 
 
 class Trie:
-    """شجرة Trie للبحث السريع عن الكلمات العربية"""
-
     def __init__(self):
         self.root = TrieNode()
         self.word_count = 0
@@ -32,6 +28,8 @@ class Trie:
         if not word or not word.strip():
             return
         word = self._normalize(word)
+        if not word:
+            return
         node = self.root
         for char in word:
             if char not in node.children:
@@ -64,7 +62,7 @@ class Trie:
         self._collect_words(self.root, words)
         return words
 
-    def _find_node(self, prefix: str):
+    def _find_node(self, prefix):
         node = self.root
         for char in prefix:
             if char not in node.children:
@@ -73,7 +71,7 @@ class Trie:
         return node
 
     def _collect_words(self, node, words):
-        if node.is_end:
+        if node.is_end and node.word:
             words.append(node.word)
         for child in node.children.values():
             self._collect_words(child, words)
@@ -83,7 +81,7 @@ class Trie:
         if not word:
             return ""
         word = re.sub(
-            r'[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06DC]',
+            r'[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06DC\u0640]',
             '', word
         )
         return word.strip()
@@ -95,26 +93,13 @@ class Trie:
         return self.search(word)
 
 
-def download_dictionary(url: str, filepath: str) -> bool:
-    """تحميل ملف القاموس من الإنترنت"""
-    try:
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
-        response = urllib.request.urlopen(url, timeout=30)
-        data = response.read()
-        with open(filepath, 'wb') as f:
-            f.write(data)
-        return True
-    except Exception:
-        return False
-
-
-def load_trie(dict_file: str = None, auto_download: bool = True) -> Trie:
-    """تحميل القاموس العربي وبناء شجرة Trie"""
+def load_trie(dict_file=None, auto_download=True):
+    """تحميل القاموس العربي الضخم وبناء شجرة Trie"""
     trie = Trie()
     dict_path = dict_file or config.DICT_FILE
     loaded = False
 
-    # من ملف محلي
+    # === 1. من ملف محلي ===
     if os.path.exists(dict_path):
         try:
             with open(dict_path, 'r', encoding='utf-8') as f:
@@ -127,20 +112,36 @@ def load_trie(dict_file: str = None, auto_download: bool = True) -> Trie:
         except Exception:
             pass
 
-    # من الإنترنت
+    # === 2. تحميل من الإنترنت ===
     if not loaded and auto_download:
         urls = [config.DICT_URL] + config.BACKUP_DICT_URLS
         for url in urls:
-            if download_dictionary(url, dict_path):
+            try:
+                os.makedirs(os.path.dirname(dict_path), exist_ok=True)
+                response = urllib.request.urlopen(url, timeout=30)
+                data = response.read()
+                with open(dict_path, 'wb') as f:
+                    f.write(data)
                 return load_trie(dict_path, auto_download=False)
+            except Exception:
+                continue
 
-    # القاموس الافتراضي
+    # === 3. القاموس المدمج الضخم ===
     if trie.word_count == 0:
-        for word in config.DEFAULT_WORDS:
-            trie.insert(word)
         try:
+            from core.dictionary_builder import get_massive_dictionary
+            all_words = get_massive_dictionary()
+        except ImportError:
+            all_words = config.DEFAULT_WORDS
+
+        for word in all_words:
+            trie.insert(word)
+
+        # حفظ في ملف
+        try:
+            os.makedirs(os.path.dirname(dict_path), exist_ok=True)
             with open(dict_path, 'w', encoding='utf-8') as f:
-                for word in config.DEFAULT_WORDS:
+                for word in all_words:
                     f.write(word + '\n')
         except Exception:
             pass
@@ -148,7 +149,7 @@ def load_trie(dict_file: str = None, auto_download: bool = True) -> Trie:
     return trie
 
 
-def add_words_to_file(words: list, filepath: str = None) -> int:
+def add_words_to_file(words, filepath=None):
     filepath = filepath or config.DICT_FILE
     existing = set()
     if os.path.exists(filepath):
