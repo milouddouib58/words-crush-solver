@@ -36,8 +36,8 @@ API_TIMEOUT = 15
 
 # ===== إعدادات Gemini AI =====
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
-GEMINI_MODEL = "gemini-2.5-flash"
-GEMINI_VISION_MODEL = "gemini-2.5-flash"
+GEMINI_MODEL = "gemini-flash-latest"
+GEMINI_VISION_MODEL = "gemini-flash-latest"
 
 # ===== إعدادات Mistral AI =====
 MISTRAL_API_KEY = os.environ.get("MISTRAL_API_KEY", "")
