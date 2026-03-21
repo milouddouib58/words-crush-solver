@@ -11,8 +11,15 @@ import streamlit as st
 try:
     from mistralai import Mistral
     _HAS_MISTRAL = True
+    _MISTRAL_STYLE = "new"
 except ImportError:
-    _HAS_MISTRAL = False
+    try:
+        from mistralai.client import MistralClient as Mistral
+        _HAS_MISTRAL = True
+        _MISTRAL_STYLE = "legacy"
+    except ImportError:
+        _HAS_MISTRAL = False
+        _MISTRAL_STYLE = None
 
 def get_api_key() -> str:
     """استرجاع مفتاح Mistral من الإعدادات"""
@@ -43,8 +50,19 @@ def get_client() -> Mistral:
         model_name = getattr(config, 'MISTRAL_MODEL', 'mistral-large-latest')
     except Exception:
         model_name = 'mistral-large-latest'
+    
+    # تصحيح الموديلات القديمة إذا كان العميل قديم
+    if _MISTRAL_STYLE == "legacy" and "latest" in model_name:
+        if "large" in model_name: model_name = "mistral-medium"
+        elif "small" in model_name: model_name = "mistral-small"
         
-    return Mistral(api_key=get_api_key()), model_name
+    api_key = get_api_key()
+    if _MISTRAL_STYLE == "new":
+        return Mistral(api_key=api_key), model_name
+    else:
+        # MistralClient constructor in legacy version
+        from mistralai.client import MistralClient
+        return MistralClient(api_key=api_key), model_name
 
 def _clean_json_response(text: str) -> str:
     text = text.strip()
@@ -88,11 +106,19 @@ def mistral_solve_proverb(emojis: str, letters: str = "", hint: str = "", word_c
   ]
 }}
         """
-        response = client.chat.complete(
-            model=model,
-            messages=[{"role": "user", "content": prompt}],
-            response_format={"type": "json_object"}
-        )
+        if _MISTRAL_STYLE == "new":
+            response = client.chat.complete(
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"}
+            )
+        else:
+            # Legacy style
+            from mistralai.models.chat_completion import ChatMessage
+            response = client.chat(
+                model=model,
+                messages=[ChatMessage(role="user", content=prompt)]
+            )
         
         json_str = _clean_json_response(response.choices[0].message.content)
         return json.loads(json_str)
@@ -100,9 +126,9 @@ def mistral_solve_proverb(emojis: str, letters: str = "", hint: str = "", word_c
     except Exception as e:
         return {"error": f"خطأ في الاتصال بمسترال: {str(e)}"}
 
-def mistral_solve_logic(arabic_letters: str, topic: str = "", image_description: str = "", trie_results=None, word_lengths=None) -> dict:
+def mistral_solve_logic(arabic_letters: str, topic: str = "", image_description: str = "", trie_results=None, word_lengths=None, partial_words=None) -> dict:
     """
-    منطق Mistral لدمج الحروف مع وصف الصورة (القادم من Gemini) واستخراج الكلمات بالطول المطلوب.
+    منطق Mistral لدمج الحروف واستخراج الكلمات بالطول أو استنتاج الكلمات الناقصة في المتقاطعة.
     """
     if not is_ai_available():
          return {"error": "مفتاح Mistral API غير متوفر."}
@@ -114,29 +140,38 @@ def mistral_solve_logic(arabic_letters: str, topic: str = "", image_description:
         client, model = get_client()
         prompt = f"""
 أنت خبير في لعبة الكلمات العربية (مثل كلمات كراش) وتعرف كيف تحل مراحل "الكلمات المبعثرة" و "الكلمات المتقاطعة". 
-لديك الحروف المعطاة في اللوحة: "{arabic_letters}"
+لديك الحروف المعطاة في اللوحة (لوحة المفاتيح أدناه): "{arabic_letters}"
 وبناءً على الموضوع (إن وجد): "{topic}"
-ووصف الصورة المعطى للحالة (إن وجد): "{image_description}"
-أطوال الكلمات والمربعات الفارغة المطلوبة (إن توفرت): {word_lengths}
+ووصف الصورة المعطى للحالة: "{image_description}"
+أطوال الكلمات المطلوبة (إن توفرت): {word_lengths}
+الكلمات المتقاطعة الناقصة في الشبكة (تحتوي على فراغ `_`): {partial_words}
 
 مهمتك:
-1. استخراج الكلمات العربية ذات المعنى والتي يمكن تشكيلها حصرياً من الحروف المتاحة (يجب ألا تتجاوز تكرارات أي حرف في الكلمة عدد تكراراته في الحروف المعطاة).
-2. في الكلمات المبعثرة والمتقاطعة، الكلمات تتعلق بشكل وثيق بالصورة الاستدلالية المرفقة (مثلاً وصف الصورة يوضح شجرة، الكلمات قد تكون: غصن، أوراق، جذع...).
-3. إذا توفرت "أطوال الكلمات المطلوبة"، فيجب أن تكون الكلمات المستخرجة مطابقة تماماً لهذه الأطوال (مثلاً إذا طلبت كلمة من 4 وكلمة من 5، أوجد الكلمات المطابقة للمشهد بهذا الطول والمنحوتة من الحروف المعطاة). في الكلمات المتقاطعة هناك حروف مشتركة بين الكلمات.
-4. استخدم معرفتك اللغوية لإنتاج كلمات إضافية دقيقة قد يغفل عنها القاموس العادي المعطى لك كالتالي: {trie_results[:20]}...
+1. في الكلمات المتقاطعة: إذا توفرت "كلمات متقاطعة ناقصة" مثل (`م _ س و م`)، استنتج الكلمة الكاملة المرتبطة بقوة بتفاصيل الصورة (مثلاً: ساحر يقطع امرأة -> مقسوم). وتأكد أن الحرف الناقص لتكملة الكلمة موجود ضمن الحروف المعطاة "{arabic_letters}".
+2. في الكلمات المبعثرة: استخرج الكلمات المتوافقة مع أطوال المربعات المطلوبة "{word_lengths}".
+3. استخرج الكلمات ذات المعنى المرتبطة بشدة بوصف المشهد، ولا تتجاوز تكرارات الحروف المتاحة.
+4. القاموس العادي استخرج هذه الكلمات مبدئياً: {trie_results[:20]}...
 
 أرجع النتيجة بتنسيق JSON حصراً بهذا الهيكل:
 {{
-  "ai_topic": "لخص الفكرة العامة للحل ومحتوى الصورة بكلمتين",
-  "words": ["كلمة1", "كلمة2", "كلمة3"],
-  "explanation": "لماذا اقترحت هذه الكلمات بناءً على تقاطعها مع المشهد والمربعات"
+  "ai_topic": "لخص الفكرة العامة للمشهد واللغز بكلمتين",
+  "words": ["الكلمة_المكتملة_الأولى", "الكلمة_الثانية"],
+  "explanation": "شرح منطقي قصير جداً لسبب اختيارك الكلمات بناءً على تقاطعها مع المشهد والمربعات/الفراغات"
 }}
         """
-        response = client.chat.complete(
-            model=model,
-            messages=[{"role": "user", "content": prompt}],
-            response_format={"type": "json_object"}
-        )
+        if _MISTRAL_STYLE == "new":
+            response = client.chat.complete(
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"}
+            )
+        else:
+            # Legacy style
+            from mistralai.models.chat_completion import ChatMessage
+            response = client.chat(
+                model=model,
+                messages=[ChatMessage(role="user", content=prompt)]
+            )
         
         json_str = _clean_json_response(response.choices[0].message.content)
         ai_data = json.loads(json_str)

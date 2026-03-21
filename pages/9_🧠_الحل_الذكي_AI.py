@@ -72,14 +72,19 @@ st.markdown("""
 gemini_ready = is_gemini_av()
 mistral_ready = is_mistral_av()
 
+# تجاوز التحقق إذا كانت الأداة أكدت وجود المفاتيح (لحل مشكلة الـ Cache في Streamlit)
 if not (gemini_ready and mistral_ready):
-    st.error("""
-    ⚠️ **الهيكلة المزدوجة تتطلب تفعيل المفاتيح**
-    الرجاء تسجيل المفاتيح التالية في الـ Secrets للعمل بكفاءة:
-    - `GEMINI_API_KEY`: لمعالجة الصور
-    - `MISTRAL_API_KEY`: للحل المنطقي والأمثال
-    """)
-    st.stop()
+    if "GEMINI_API_KEY" in st.secrets and "MISTRAL_API_KEY" in st.secrets:
+        gemini_ready = True
+        mistral_ready = True
+    else:
+        st.error("""
+        ⚠️ **الهيكلة المزدوجة تتطلب تفعيل المفاتيح**
+        الرجاء تسجيل المفاتيح التالية في الـ Secrets للعمل بكفاءة:
+        - `GEMINI_API_KEY`: لمعالجة الصور
+        - `MISTRAL_API_KEY`: للحل المنطقي والأمثال
+        """)
+        st.stop()
 
 
 st.markdown("## 🎯 اختر طريقة الحل")
@@ -137,7 +142,11 @@ if mode == "📷 حل من صورة الشاشة (Gemini يقرأ ➔ Mistral ي
                     
                     # 2. المرحلة المنطقية
                     emojis = vision_ext.get("emojis", "")
-                    letters = vision_ext.get("available_letters", "").replace(" ", "")
+                    letters_raw = vision_ext.get("available_letters", "")
+                    if isinstance(letters_raw, list):
+                        letters = "".join(letters_raw)
+                    else:
+                        letters = str(letters_raw).replace(" ", "")
                     # تصفية فقط الأحرف العربية من result ["available_letters"]
                     arabic = ''.join(c for c in letters if '\u0600' <= c <= '\u06FF')
                     
