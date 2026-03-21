@@ -45,7 +45,7 @@ MISTRAL_MODEL = "mistral-large-latest"
 
 # ===== إعدادات Cerebras AI (الجديد - فائق السرعة) =====
 CEREBRAS_API_KEY = os.environ.get("CEREBRAS_API_KEY", "")
-CEREBRAS_MODEL = "llama3.1-70b" 
+CEREBRAS_MODEL = "llama3.1-8b" 
 
 
 # ===== إنشاء المجلدات =====
