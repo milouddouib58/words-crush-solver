@@ -39,9 +39,14 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 GEMINI_MODEL = "gemini-flash-latest"
 GEMINI_VISION_MODEL = "gemini-flash-latest"
 
-# ===== إعدادات Mistral AI =====
+# ===== إعدادات Mistral AI (Legacy) =====
 MISTRAL_API_KEY = os.environ.get("MISTRAL_API_KEY", "")
 MISTRAL_MODEL = "mistral-large-latest"
+
+# ===== إعدادات Cerebras AI (الجديد - فائق السرعة) =====
+CEREBRAS_API_KEY = os.environ.get("CEREBRAS_API_KEY", "")
+CEREBRAS_MODEL = "llama3.1-70b" 
+
 
 # ===== إنشاء المجلدات =====
 os.makedirs(DATA_DIR, exist_ok=True)

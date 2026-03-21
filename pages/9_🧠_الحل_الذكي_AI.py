@@ -16,7 +16,7 @@ from core.trie import load_trie
 from core.scrambler import solve_scrambled
 from core.filter import get_available_topics
 from utils.gemini_helper import is_ai_available as is_gemini_av, ai_extract_from_image
-from utils.mistral_helper import is_ai_available as is_mistral_av, mistral_solve_logic, mistral_solve_proverb
+from utils.cerebras_helper import is_ai_available as is_cerebras_av, cerebras_solve_logic, cerebras_solve_proverb
 
 
 @st.cache_resource(show_spinner=False)
@@ -70,19 +70,19 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 gemini_ready = is_gemini_av()
-mistral_ready = is_mistral_av()
+cerebras_ready = is_cerebras_av()
 
 # تجاوز التحقق إذا كانت الأداة أكدت وجود المفاتيح (لحل مشكلة الـ Cache في Streamlit)
-if not (gemini_ready and mistral_ready):
-    if "GEMINI_API_KEY" in st.secrets and "MISTRAL_API_KEY" in st.secrets:
+if not (gemini_ready and cerebras_ready):
+    if "GEMINI_API_KEY" in st.secrets and "CEREBRAS_API_KEY" in st.secrets:
         gemini_ready = True
-        mistral_ready = True
+        cerebras_ready = True
     else:
         st.error("""
         ⚠️ **الهيكلة المزدوجة تتطلب تفعيل المفاتيح**
         الرجاء تسجيل المفاتيح التالية في الـ Secrets للعمل بكفاءة:
         - `GEMINI_API_KEY`: لمعالجة الصور
-        - `MISTRAL_API_KEY`: للحل المنطقي والأمثال
+        - `CEREBRAS_API_KEY`: للحل المنطقي والأمثال (عبر Cerebras)
         """)
         st.stop()
 
@@ -91,9 +91,9 @@ st.markdown("## 🎯 اختر طريقة الحل")
 mode = st.radio(
     "وضع الحل",
     [
-        "📷 حل من صورة الشاشة (Gemini يقرأ ➔ Mistral يحل)",
-        "🔤 حل كلمات مبعثرة (Mistral Logic)",
-        "📜 حل أمثال من إيموجي (Mistral NLP)",
+        "📷 حل من صورة الشاشة (Gemini يقرأ ➔ Cerebras يحل)",
+        "🔤 حل كلمات مبعثرة (Cerebras Logic)",
+        "📜 حل أمثال من إيموجي (Cerebras NLP)",
     ],
     horizontal=True,
     label_visibility="collapsed"
@@ -104,9 +104,9 @@ st.markdown("---")
 # ═══════════════════════════════════════════
 #  📷 الوضع 1: حل من صورة (الدمج)
 # ═══════════════════════════════════════════
-if mode == "📷 حل من صورة الشاشة (Gemini يقرأ ➔ Mistral يحل)":
+if mode == "📷 حل من صورة الشاشة (Gemini يقرأ ➔ Cerebras يحل)":
     uploaded = st.file_uploader(
-        "📤 ارفع الصورة (Gemini سيصفها، ثم Mistral سيشتق الكلمات المنطقية)",
+        "📤 ارفع الصورة (Gemini سيصفها، ثم Cerebras سيشتق الكلمات المنطقية)",
         type=["png", "jpg", "jpeg", "webp"]
     )
     extra_info = st.text_input("💡 معلومات مساعدة للمُحرك")
@@ -120,7 +120,7 @@ if mode == "📷 حل من صورة الشاشة (Gemini يقرأ ➔ Mistral ي
             st.image(image, use_container_width=True)
 
         with col_sol:
-            if st.button("🚀 تحليل وحل المرحلة المزدوج", type="primary", use_container_width=True):
+            if st.button("🚀 تحليل وحل المرحلة (Gemini + Cerebras)", type="primary", use_container_width=True):
                 
                 # 1. المرحلة البصرية
                 with st.spinner("👁️ Gemini يقرأ الصورة حالياً..."):
@@ -151,9 +151,9 @@ if mode == "📷 حل من صورة الشاشة (Gemini يقرأ ➔ Mistral ي
                     arabic = ''.join(c for c in letters if '\u0600' <= c <= '\u06FF')
                     
                     if "أمثال" in str(vision_ext.get("stage_type", "")) or (emojis and len(arabic) < 3):
-                        st.info("📜 تُصنف كمرحلة أمثال، إحالة لـ Mistral لحلها...")
-                        with st.spinner("🤖 Mistral يعالج الإيموجيات..."):
-                            m_result = mistral_solve_proverb(emojis=emojis, letters=arabic, hint=vision_ext.get("topic", ""))
+                        st.info("📜 تُصنف كمرحلة أمثال، إحالة لـ Cerebras لحلها...")
+                        with st.spinner("🤖 Cerebras يعالج الإيموجيات..."):
+                            m_result = cerebras_solve_proverb(emojis=emojis, letters=arabic, hint=vision_ext.get("topic", ""))
                         
                         if m_result.get("proverb"):
                             st.markdown(f"<div class='proverb-result'>📜 {m_result['proverb']}</div>", unsafe_allow_html=True)
@@ -166,8 +166,8 @@ if mode == "📷 حل من صورة الشاشة (Gemini يقرأ ➔ Mistral ي
                         with st.spinner("📊 فحص القاموس المحلي..."):
                             trie_words = solve_scrambled(trie, arabic)
                         
-                        with st.spinner("🤖 Mistral يشتق الكلمات الناقصة بناءً على وصف Gemini والمربعات..."):
-                            m_result = mistral_solve_logic(
+                        with st.spinner("🤖 Cerebras يشتق الكلمات الناقصة..."):
+                            m_result = cerebras_solve_logic(
                                 arabic_letters=arabic,
                                 topic=vision_ext.get("topic", ""),
                                 image_description=vision_ext.get("image_description", ""),
@@ -204,11 +204,11 @@ elif mode == "🔤 حل كلمات مبعثرة (Mistral Logic)":
     with col1: letters = st.text_input("✏️ الحروف المتاحة المبعثرة", key="h_l")
     with col2: topic = st.selectbox("🏷️ الموضوع (اختياري)", ["بدون"] + get_available_topics(), key="h_t")
     
-    desc = st.text_input("🖼️ هل هناك رسمة؟ صِفها هنا لمساعدة Mistral", key="h_d")
+    desc = st.text_input("🖼️ هل هناك رسمة؟ صِفها هنا لمساعدة Cerebras", key="h_d")
     lengths_str = st.text_input("📏 أطوال الكلمات المطلوبة (اختياري مثل: 4, 5)", key="h_len")
     partial_str = st.text_input("🧩 كلمات متقاطعة ناقصة (اختياري وضع _ للفراغ: م _ س و م)", key="h_part")
     
-    if st.button("🚀 حل باستخدام Mistral", type="primary"):
+    if st.button("🚀 حل باستخدام Cerebras", type="primary"):
         arabic = ''.join(c for c in letters if '\u0600' <= c <= '\u06FF')
         parsed_lengths = []
         if lengths_str:
@@ -225,9 +225,9 @@ elif mode == "🔤 حل كلمات مبعثرة (Mistral Logic)":
             with st.spinner("📊 قراءة القاموس..."):
                 trie_words = solve_scrambled(trie, arabic)
             
-            with st.spinner("🤖 معالجة المنطق عبر Mistral..."):
+            with st.spinner("🤖 معالجة المنطق عبر Cerebras..."):
                 topic_str = "" if topic == "بدون" else topic
-                res = mistral_solve_logic(arabic, topic=topic_str, image_description=desc, trie_results=trie_words, word_lengths=parsed_lengths, partial_words=parsed_partials)
+                res = cerebras_solve_logic(arabic, topic=topic_str, image_description=desc, trie_results=trie_words, word_lengths=parsed_lengths, partial_words=parsed_partials)
             
             if "error" in res:
                 st.error(res["error"])
